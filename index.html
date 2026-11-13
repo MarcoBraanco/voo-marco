@@ -117,7 +117,7 @@
   <h3 class="sec">Os voos</h3>
   <div id="flights"></div>
 
-  <h3 class="sec">Pra mãe e pro mano 💛</h3>
+  <h3 class="sec">Pra mãe e pro Ziu 💛</h3>
   <ul class="tips">
     <li><b>O mapa se atualiza sozinho</b> a cada 30 segundos — é só deixar a página aberta.</li>
     <li><b>Horários em amarelo</b> estão no horário de Brasília. Os outros são no horário local de cada aeroporto.</li>
@@ -189,9 +189,9 @@ const gcLine=(a,b,n=128)=>Array.from({length:n+1},(_,i)=>{const p=gcPoint(a,b,i/
 
 // ====== MAPA ======
 const map = L.map('map',{zoomControl:true,attributionControl:true,worldCopyJump:true}).setView([10,-25],3);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-  maxZoom:12, subdomains:'abcd',
-  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:12,
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
 const lines={};
