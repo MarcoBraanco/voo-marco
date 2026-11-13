@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadê o Marco? ✈️ Voo para a Europa</title>
+<meta name="description" content="Acompanhe o voo do Marco: São Paulo → Madri → Dublin">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1220; --card:#121b2e; --card2:#17223a; --line:#24314d;
+    --text:#e8eefc; --muted:#93a2c4; --accent:#ffb020; --ib:#d7192d; --fr:#2b52c7; --ok:#2ecc71;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  h1{font-size:clamp(22px,5vw,30px);margin:0;font-weight:800;letter-spacing:-.02em}
+  h1 small{display:block;font-size:14px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:4px}
+  .live-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+  .live-dot i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(46,204,113,.7);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,204,113,.6)}70%{box-shadow:0 0 0 9px rgba(46,204,113,0)}100%{box-shadow:0 0 0 0 rgba(46,204,113,0)}}
+
+  .status{background:linear-gradient(135deg,#1b2a4a,#121b2e);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  .status .emoji{font-size:34px;line-height:1}
+  .status .row{display:flex;gap:14px;align-items:center}
+  .status h2{margin:0;font-size:clamp(18px,4.4vw,24px);font-weight:700}
+  .status p{margin:4px 0 0;color:var(--muted);font-size:15px}
+  .bar{height:10px;background:#0c1426;border-radius:99px;margin-top:16px;overflow:hidden;border:1px solid var(--line)}
+  .bar > div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ffd36b);border-radius:99px;transition:width .8s}
+  .bar-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .kpi{background:rgba(255,255,255,.04);border-radius:12px;padding:10px}
+  .kpi b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+  .kpi span{font-size:12px;color:var(--muted)}
+
+  #map{height:min(58vh,480px);border-radius:18px;border:1px solid var(--line);margin-bottom:6px;background:#aad3df}
+  .map-note{font-size:12px;color:var(--muted);margin:0 4px 16px}
+  .plane-icon{font-size:30px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));transition:transform .5s}
+  .apt-label{background:#fff;color:#111;font:700 12px Inter,sans-serif;padding:2px 6px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.3);white-space:nowrap}
+
+  .clocks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .clock{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .clock b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+  .clock span{font-size:12px;color:var(--muted)}
+
+  h3.sec{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 4px 10px}
+  .flight{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-bottom:12px}
+  .flight .top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;color:#fff;font-weight:700}
+  .flight.ib .top{background:var(--ib)} .flight.fr .top{background:var(--fr)}
+  .flight .top .tag{font-size:12px;background:rgba(255,255,255,.2);padding:3px 8px;border-radius:99px;font-weight:600}
+  .route{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px;gap:8px}
+  .route .code{font-size:34px;font-weight:800;letter-spacing:-.02em}
+  .route .city{font-size:13px;color:var(--muted)}
+  .route .t{font-size:20px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+  .route .br{font-size:12px;color:var(--accent)}
+  .route .mid{text-align:center;color:var(--muted);font-size:12px}
+  .route .mid .pl{font-size:22px;display:block}
+  .route .r{text-align:right}
+  .details{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+  .details div{background:var(--card2);padding:10px 14px}
+  .details span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .details b{font-size:14px}
+  .links{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px}
+  .links a{color:var(--text);text-decoration:none;font-size:13px;font-weight:600;background:rgba(255,255,255,.07);border:1px solid var(--line);padding:8px 12px;border-radius:10px}
+  .links a:hover{background:rgba(255,255,255,.14)}
+
+  .layover{background:var(--card);border:1px dashed var(--line);border-radius:18px;padding:14px 16px;margin-bottom:12px;color:var(--muted);font-size:14px}
+  .layover b{color:var(--text)}
+
+  .tips{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:6px 16px}
+  .tips li{margin:10px 0;color:var(--muted);font-size:14px;line-height:1.45}
+  .tips li b{color:var(--text)}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+  @media (max-width:560px){
+    .kpis{grid-template-columns:repeat(3,1fr)} .kpi b{font-size:15px}
+    .clock b{font-size:18px} .route .code{font-size:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cadê o Marco? ✈️<small>São Paulo → Madri → Dublin · 14 a 16 de novembro</small></h1>
+    <div class="live-dot"><i></i><span id="upd">atualizando…</span></div>
+  </header>
+
+  <section class="status">
+    <div class="row">
+      <div class="emoji" id="st-emoji">🧳</div>
+      <div>
+        <h2 id="st-title">Carregando…</h2>
+        <p id="st-sub"></p>
+      </div>
+    </div>
+    <div class="bar"><div id="st-bar"></div></div>
+    <div class="bar-legend"><span id="st-from"></span><span id="st-pct"></span><span id="st-to"></span></div>
+    <div class="kpis">
+      <div class="kpi"><b id="k1">–</b><span id="k1l">Falta</span></div>
+      <div class="kpi"><b id="k2">–</b><span id="k2l">Distância restante</span></div>
+      <div class="kpi"><b id="k3">–</b><span id="k3l">Velocidade</span></div>
+    </div>
+  </section>
+
+  <div id="map"></div>
+  <p class="map-note" id="map-note">Posição estimada pelo horário do voo.</p>
+
+  <div class="clocks">
+    <div class="clock"><b id="c-br">--:--</b><span>🇧🇷 Brasília</span></div>
+    <div class="clock"><b id="c-mad">--:--</b><span>🇪🇸 Madri</span></div>
+    <div class="clock"><b id="c-dub">--:--</b><span>🇮🇪 Dublin</span></div>
+  </div>
+
+  <h3 class="sec">Os voos</h3>
+  <div id="flights"></div>
+
+  <h3 class="sec">Pra mãe e pro mano 💛</h3>
+  <ul class="tips">
+    <li><b>O mapa se atualiza sozinho</b> a cada 30 segundos — é só deixar a página aberta.</li>
+    <li><b>Horários em amarelo</b> estão no horário de Brasília. Os outros são no horário local de cada aeroporto.</li>
+    <li><b>No meio do Atlântico</b> nenhum site consegue ver o avião ao vivo (não tem antena no oceano). Aí o mapa mostra a posição <b>estimada</b> pelo horário — é normal.</li>
+    <li><b>Quer ver ao vivo de verdade?</b> Os botões “Flightradar24” e “FlightAware” abrem o rastreio oficial do avião.</li>
+    <li><b>A chegada pode variar</b> uns 20–40 minutos para mais ou para menos. Se atrasar a saída, o pouso atrasa junto.</li>
+  </ul>
+
+  <footer>Feito com carinho pra família acompanhar a viagem · horários previstos podem mudar</footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ====== DADOS DOS VOOS (horários em UTC) ======
+const AIRPORTS = {
+  GRU:{code:'GRU', name:'São Paulo – Guarulhos', lat:-23.4356, lon:-46.4731, tz:'America/Sao_Paulo'},
+  MAD:{code:'MAD', name:'Madri – Barajas',       lat:40.4719,  lon:-3.5626,  tz:'Europe/Madrid'},
+  DUB:{code:'DUB', name:'Dublin',                lat:53.4213,  lon:-6.2701,  tz:'Europe/Dublin'},
+};
+const FLIGHTS = [
+  { id:'ib', airline:'Iberia', number:'IB 272', callsign:'IBE272', from:'GRU', to:'MAD',
+    dep:'2026-11-14T23:30:00Z', arr:'2026-11-15T09:50:00Z',
+    aircraft:'Airbus A330 / A350', depTerm:'Terminal 3', arrTerm:'Terminal 4S',
+    boarding:'2026-11-14T22:30:00Z',
+    links:[['Flightradar24','https://www.flightradar24.com/data/flights/ib272'],
+           ['FlightAware','https://www.flightaware.com/live/flight/IBE272'],
+           ['Chegadas Madri','https://www.aena.es/es/infovuelos.html']] },
+  { id:'fr', airline:'Ryanair', number:'FR 494', callsign:'RYR494', from:'MAD', to:'DUB',
+    dep:'2026-11-15T22:10:00Z', arr:'2026-11-16T00:45:00Z',
+    aircraft:'Boeing 737', depTerm:'Terminal 1', arrTerm:'Terminal 1',
+    boarding:'2026-11-15T21:40:00Z', boardingLabel:'Portão fecha',
+    links:[['Flightradar24','https://www.flightradar24.com/data/flights/fr494'],
+           ['FlightAware','https://www.flightaware.com/live/flight/RYR494'],
+           ['Chegadas Dublin','https://www.dublinairport.com/flight-information/live-arrivals']] },
+];
+FLIGHTS.forEach(f=>{f.depD=new Date(f.dep); f.arrD=new Date(f.arr); if(f.boarding) f.boardD=new Date(f.boarding);});
+
+// ?t=2026-11-15T03:00:00Z  -> simula outro horário (para testes)
+const qs = new URLSearchParams(location.search);
+const OFFSET = qs.get('t') ? (new Date(qs.get('t')) - Date.now()) : 0;
+const now = () => new Date(Date.now() + OFFSET);
+
+// ====== FORMATAÇÃO ======
+const fmt = (d,tz,opts={}) => new Intl.DateTimeFormat('pt-BR',{timeZone:tz,hour:'2-digit',minute:'2-digit',...opts}).format(d);
+const fmtDay = (d,tz) => new Intl.DateTimeFormat('pt-BR',{timeZone:tz,weekday:'short',day:'2-digit',month:'short'}).format(d).replace(/\./g,'');
+const BR='America/Sao_Paulo';
+function dur(ms){
+  ms=Math.max(0,ms); const m=Math.round(ms/60000); const h=Math.floor(m/60), mm=m%60;
+  if(h>=24){const d=Math.floor(h/24); return `${d}d ${h%24}h`;}
+  return h? `${h}h ${String(mm).padStart(2,'0')}min` : `${mm} min`;
+}
+
+// ====== GEO ======
+const R=6371, rad=x=>x*Math.PI/180, deg=x=>x*180/Math.PI;
+function toV(p){const la=rad(p.lat),lo=rad(p.lon);return [Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la)];}
+function gcDist(a,b){const A=toV(a),B=toV(b);const d=A[0]*B[0]+A[1]*B[1]+A[2]*B[2];return R*Math.acos(Math.min(1,Math.max(-1,d)));}
+function gcPoint(a,b,f){
+  const A=toV(a),B=toV(b);const w=Math.acos(Math.min(1,A[0]*B[0]+A[1]*B[1]+A[2]*B[2]));
+  if(w<1e-9) return {lat:a.lat,lon:a.lon};
+  const s1=Math.sin((1-f)*w)/Math.sin(w), s2=Math.sin(f*w)/Math.sin(w);
+  const x=s1*A[0]+s2*B[0], y=s1*A[1]+s2*B[1], z=s1*A[2]+s2*B[2];
+  return {lat:deg(Math.atan2(z,Math.hypot(x,y))), lon:deg(Math.atan2(y,x))};
+}
+function bearing(a,b){
+  const la1=rad(a.lat),la2=rad(b.lat),dl=rad(b.lon-a.lon);
+  return (deg(Math.atan2(Math.sin(dl)*Math.cos(la2),Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl)))+360)%360;
+}
+const gcLine=(a,b,n=128)=>Array.from({length:n+1},(_,i)=>{const p=gcPoint(a,b,i/n);return [p.lat,p.lon];});
+
+// ====== MAPA ======
+const map = L.map('map',{zoomControl:true,attributionControl:true,worldCopyJump:true}).setView([10,-25],3);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  maxZoom:12, subdomains:'abcd',
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+}).addTo(map);
+
+const lines={};
+FLIGHTS.forEach(f=>{
+  const a=AIRPORTS[f.from], b=AIRPORTS[f.to], color=f.id==='ib'?'#d7192d':'#2b52c7';
+  lines[f.id]={
+    todo:L.polyline(gcLine(a,b),{color,weight:3,opacity:.45,dashArray:'6 8'}).addTo(map),
+    done:L.polyline([],{color,weight:4,opacity:.95}).addTo(map)
+  };
+});
+Object.values(AIRPORTS).forEach(a=>{
+  L.circleMarker([a.lat,a.lon],{radius:6,color:'#fff',weight:2,fillColor:'#111',fillOpacity:1}).addTo(map)
+   .bindTooltip(`<span class="apt-label">${a.code}</span>`,{permanent:true,direction:'right',offset:[6,0],className:'',opacity:1});
+});
+const planeIcon = L.divIcon({className:'',html:'<div class="plane-icon" id="plane">✈️</div>',iconSize:[34,34],iconAnchor:[17,17]});
+const plane = L.marker([AIRPORTS.GRU.lat,AIRPORTS.GRU.lon],{icon:planeIcon,zIndexOffset:1000}).addTo(map);
+let firstFit=true;
+
+// ====== DADOS AO VIVO (ADS-B abertos, quando houver cobertura) ======
+let live=null, liveFor=null, liveAt=0;
+async function tryFetch(url){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),7000);
+  try{
+    const r=await fetch(url,{signal:ctl.signal,cache:'no-store'}); if(!r.ok) throw 0;
+    const j=await r.json(); const ac=(j.ac||j.aircraft||[]).find(x=>x.lat!=null&&x.lon!=null);
+    if(!ac) throw 0; return ac;
+  } finally{clearTimeout(t);}
+}
+async function fetchLive(f){
+  const cs=f.callsign;
+  const urls=[`https://api.adsb.lol/v2/callsign/${cs}`,`https://opendata.adsb.fi/api/v2/callsign/${cs}`,`https://api.airplanes.live/v2/callsign/${cs}`];
+  try{
+    const ac=await Promise.any(urls.map(tryFetch));
+    const age=(ac.seen_pos??ac.seen??0);
+    if(age>300) return; // posição velha demais
+    live={lat:ac.lat,lon:ac.lon,alt:ac.alt_baro,gs:ac.gs,track:ac.track}; liveFor=f.id; liveAt=Date.now();
+  }catch(e){ /* sem cobertura – fica no estimado */ }
+}
+
+// ====== ESTADO DA VIAGEM ======
+function phase(t){
+  const [ib,fr]=FLIGHTS;
+  if(t<ib.depD) return {k:'pre',f:ib};
+  if(t<ib.arrD) return {k:'air',f:ib};
+  if(t<fr.depD) return {k:'layover',f:fr,prev:ib};
+  if(t<fr.arrD) return {k:'air',f:fr};
+  return {k:'done',f:fr};
+}
+
+function render(){
+  const t=now();
+  document.getElementById('c-br').textContent=fmt(t,BR);
+  document.getElementById('c-mad').textContent=fmt(t,'Europe/Madrid');
+  document.getElementById('c-dub').textContent=fmt(t,'Europe/Dublin');
+
+  const P=phase(t), f=P.f, a=AIRPORTS[f.from], b=AIRPORTS[f.to];
+  const E=id=>document.getElementById(id);
+  let pos, frac=0, title, sub, emoji, hdg=bearing(a,b);
+  const total=gcDist(a,b);
+
+  // reset trechos
+  FLIGHTS.forEach(x=>{
+    const A=AIRPORTS[x.from],B=AIRPORTS[x.to];
+    if(t>=x.arrD) lines[x.id].done.setLatLngs(gcLine(A,B)); else if(t<x.depD) lines[x.id].done.setLatLngs([]);
+  });
+
+  E('st-from').textContent=f.from; E('st-to').textContent=f.to;
+
+  if(P.k==='pre'){
+    pos=a; emoji='🧳';
+    const toBoard=f.boardD-t;
+    title='Ainda não decolou';
+    sub=`${f.airline} ${f.number} sai de Guarulhos às ${fmt(f.depD,BR)} (Brasília), ${fmtDay(f.depD,BR)}.`+(toBoard>0?` Embarque às ${fmt(f.boardD,BR)}.`:' Embarque em andamento! 🚶');
+    E('k1').textContent=dur(f.depD-t); E('k1l').textContent='Para decolar';
+    E('k2').textContent=Math.round(total).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Até Madri';
+    E('k3').textContent=dur(f.arrD-f.depD); E('k3l').textContent='Tempo de voo';
+  } else if(P.k==='air'){
+    frac=(t-f.depD)/(f.arrD-f.depD);
+    pos=gcPoint(a,b,frac);
+    let isLive=false;
+    if(live && liveFor===f.id && Date.now()-liveAt<120000){ pos={lat:live.lat,lon:live.lon}; isLive=true;
+      // fração pela distância real
+      frac=Math.min(1,Math.max(0,gcDist(a,pos)/total));
+      if(live.track!=null) hdg=live.track;
+    } else hdg=bearing(pos,b);
+    const left=total*(1-frac);
+    emoji='✈️';
+    title= f.id==='ib' ? 'Voando sobre o Atlântico rumo a Madri' : 'Voando para Dublin';
+    if(f.id==='ib' && frac<0.08) title='Acabou de decolar de São Paulo';
+    if(frac>0.93) title=`Se preparando para pousar em ${f.id==='ib'?'Madri':'Dublin'}`;
+    sub=`${f.airline} ${f.number} · pouso previsto às ${fmt(f.arrD,AIRPORTS[f.to].tz)} em ${f.id==='ib'?'Madri':'Dublin'} (${fmt(f.arrD,BR)} em Brasília).`;
+    E('k1').textContent=dur(f.arrD-t); E('k1l').textContent='Para pousar';
+    E('k2').textContent=Math.round(left).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Distância restante';
+    if(isLive && live.gs){ E('k3').textContent=Math.round(live.gs*1.852)+' km/h'; E('k3l').textContent= live.alt? `Altitude ${Math.round((live.alt==='ground'?0:live.alt)*0.3048).toLocaleString('pt-BR')} m`:'Velocidade'; }
+    else { E('k3').textContent='~'+Math.round(total/((f.arrD-f.depD)/3.6e6))+' km/h'; E('k3l').textContent='Velocidade média'; }
+    E('map-note').innerHTML = isLive ? '🟢 <b>Posição ao vivo</b> (dados ADS-B abertos).' : 'Posição <b>estimada</b> pelo horário do voo. Para o rastreio oficial ao vivo, use os botões do Flightradar24/FlightAware abaixo.';
+    lines[f.id].done.setLatLngs(gcLine(a,{lat:pos.lat,lon:pos.lon},64));
+  } else if(P.k==='layover'){
+    pos=AIRPORTS.MAD; emoji='🇪🇸';
+    title='Em Madri, esperando a conexão';
+    sub=`Chegou em Madri. Próximo voo: ${f.airline} ${f.number} para Dublin às ${fmt(f.depD,'Europe/Madrid')} de Madri (${fmt(f.depD,BR)} em Brasília). Muda do Terminal 4 para o Terminal 1.`;
+    E('st-from').textContent='GRU'; E('st-to').textContent='DUB';
+    frac=(t-P.prev.arrD)/(f.depD-P.prev.arrD);
+    E('k1').textContent=dur(f.depD-t); E('k1l').textContent='Para o próximo voo';
+    E('k2').textContent=Math.round(total).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Até Dublin';
+    E('k3').textContent=dur(f.arrD-f.depD); E('k3l').textContent='Tempo de voo';
+    E('map-note').textContent='Em solo em Madri (conexão).';
+  } else {
+    pos=AIRPORTS.DUB; frac=1; emoji='🎉';
+    title='Chegou em Dublin!';
+    sub=`Pousou em Dublin por volta de ${fmt(f.arrD,'Europe/Dublin')} (horário local) · ${fmt(f.arrD,BR)} em Brasília. Agora é só esperar a mensagem dele 😄`;
+    E('k1').textContent='✔'; E('k1l').textContent='Viagem concluída';
+    E('k2').textContent=Math.round(gcDist(AIRPORTS.GRU,AIRPORTS.MAD)+gcDist(AIRPORTS.MAD,AIRPORTS.DUB)).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Percorridos';
+    E('k3').textContent='2'; E('k3l').textContent='Voos';
+    E('map-note').textContent='Viagem concluída. 🇮🇪';
+  }
+  frac=Math.min(1,Math.max(0,frac));
+  E('st-emoji').textContent=emoji; E('st-title').textContent=title; E('st-sub').textContent=sub;
+  E('st-bar').style.width=(frac*100).toFixed(1)+'%'; E('st-pct').textContent=Math.round(frac*100)+'%';
+
+  plane.setLatLng([pos.lat,pos.lon]);
+  const el=document.getElementById('plane');
+  // o emoji ✈️ aponta para nordeste (45°)
+  if(el) el.style.transform=`rotate(${hdg-45}deg)`;
+
+  if(firstFit){
+    firstFit=false;
+    if(P.k==='air') map.setView([pos.lat,pos.lon], P.f.id==='ib'?3:5);
+    else if(P.k==='pre') map.fitBounds(L.latLngBounds([[AIRPORTS.GRU.lat,AIRPORTS.GRU.lon],[AIRPORTS.DUB.lat,AIRPORTS.DUB.lon]]),{padding:[30,30]});
+    else map.setView([pos.lat,pos.lon],5);
+  }
+  E('upd').textContent='atualizado '+fmt(t,BR,{second:'2-digit'});
+}
+
+// ====== CARTÕES DOS VOOS ======
+function cards(){
+  const h=FLIGHTS.map((f,i)=>{
+    const a=AIRPORTS[f.from], b=AIRPORTS[f.to];
+    const card=`
+    <div class="flight ${f.id}">
+      <div class="top"><span>${f.airline} · ${f.number}</span><span class="tag">${i===0?'Voo 1 · noturno':'Voo 2 · conexão'}</span></div>
+      <div class="route">
+        <div><div class="code">${a.code}</div><div class="city">${a.name}</div>
+          <div class="t">${fmt(f.depD,a.tz)}</div><div class="city">${fmtDay(f.depD,a.tz)}</div>
+          <div class="br">${fmt(f.depD,BR)} Brasília</div></div>
+        <div class="mid"><span class="pl">✈︎</span>${dur(f.arrD-f.depD)}<br>${Math.round(gcDist(a,b)).toLocaleString('pt-BR')} km</div>
+        <div class="r"><div class="code">${b.code}</div><div class="city">${b.name}</div>
+          <div class="t">~${fmt(f.arrD,b.tz)}</div><div class="city">${fmtDay(f.arrD,b.tz)}</div>
+          <div class="br">~${fmt(f.arrD,BR)} Brasília</div></div>
+      </div>
+      <div class="details">
+        <div><span>Saída</span><b>${f.depTerm}</b></div>
+        <div><span>Chegada</span><b>${f.arrTerm}</b></div>
+        <div><span>${f.boardingLabel||'Embarque'}</span><b>${fmt(f.boardD,a.tz)} local</b></div>
+        <div><span>Avião</span><b>${f.aircraft}</b></div>
+      </div>
+      <div class="links">${f.links.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')}</div>
+    </div>`;
+    if(i===0){
+      const nx=FLIGHTS[1];
+      return card+`<div class="layover">⏳ <b>Conexão em Madri: ~${dur(nx.depD-f.arrD)}</b> — chega no Terminal 4S (Iberia) e sai do Terminal 1 (Ryanair). Ele vai ter o dia em Madri antes do voo da noite.</div>`;
+    }
+    return card;
+  }).join('');
+  document.getElementById('flights').innerHTML=h;
+}
+
+// ====== LOOP ======
+cards(); render();
+async function tick(){
+  const P=phase(now());
+  if(P.k==='air' && !OFFSET) await fetchLive(P.f);
+  render();
+}
+tick();
+setInterval(tick,30000);
+setInterval(()=>{const t=now();['c-br','c-mad','c-dub'].forEach((id,i)=>document.getElementById(id).textContent=fmt(t,[BR,'Europe/Madrid','Europe/Dublin'][i]));},5000);
+</script>
+</body>
+</html>
