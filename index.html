@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cadê o Marco? ✈️ Voo para a Europa</title>
-<meta name="description" content="Acompanhe o voo do Marco: São Paulo → Madri → Dublin">
+<title>Cadê o Marco e a Natália? ✈️ Voo para a Europa</title>
+<meta name="description" content="Acompanhe o voo do Marco e da Natália: São Paulo → Madri → Dublin">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,7 +84,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Cadê o Marco? ✈️<small>São Paulo → Madri → Dublin · 14 a 16 de novembro</small></h1>
+    <h1>Cadê o Marco e a Natália? ✈️<small>São Paulo → Madri → Dublin · 14 a 16 de novembro</small></h1>
     <div class="live-dot"><i></i><span id="upd">atualizando…</span></div>
   </header>
 
@@ -117,7 +117,7 @@
   <h3 class="sec">Os voos</h3>
   <div id="flights"></div>
 
-  <h3 class="sec">Pra mãe e pro Ziu 💛</h3>
+  <h3 class="sec">Pra mãe, pro Ziu e pra Hilda 💛</h3>
   <ul class="tips">
     <li><b>O mapa se atualiza sozinho</b> a cada 30 segundos — é só deixar a página aberta.</li>
     <li><b>Horários em amarelo</b> estão no horário de Brasília. Os outros são no horário local de cada aeroporto.</li>
@@ -302,7 +302,7 @@ function render(){
   } else {
     pos=AIRPORTS.DUB; frac=1; emoji='🎉';
     title='Chegou em Dublin!';
-    sub=`Pousou em Dublin por volta de ${fmt(f.arrD,'Europe/Dublin')} (horário local) · ${fmt(f.arrD,BR)} em Brasília. Agora é só esperar a mensagem dele 😄`;
+    sub=`Pousou em Dublin por volta de ${fmt(f.arrD,'Europe/Dublin')} (horário local) · ${fmt(f.arrD,BR)} em Brasília. Agora é só esperar a mensagem deles 😄`;
     E('k1').textContent='✔'; E('k1l').textContent='Viagem concluída';
     E('k2').textContent=Math.round(gcDist(AIRPORTS.GRU,AIRPORTS.MAD)+gcDist(AIRPORTS.MAD,AIRPORTS.DUB)).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Percorridos';
     E('k3').textContent='2'; E('k3l').textContent='Voos';
@@ -352,7 +352,7 @@ function cards(){
     </div>`;
     if(i===0){
       const nx=FLIGHTS[1];
-      return card+`<div class="layover">⏳ <b>Conexão em Madri: ~${dur(nx.depD-f.arrD)}</b> — chega no Terminal 4S (Iberia) e sai do Terminal 1 (Ryanair). Ele vai ter o dia em Madri antes do voo da noite.</div>`;
+      return card+`<div class="layover">⏳ <b>Conexão em Madri: ~${dur(nx.depD-f.arrD)}</b> — chega no Terminal 4S (Iberia) e sai do Terminal 1 (Ryanair). Eles vão ter o dia em Madri antes do voo da noite.</div>`;
     }
     return card;
   }).join('');
