@@ -139,9 +139,9 @@ const AIRPORTS = {
 };
 const FLIGHTS = [
   { id:'ib', airline:'Iberia', number:'IB 272', callsign:'IBE272', from:'GRU', to:'MAD',
-    dep:'2026-11-14T23:30:00Z', arr:'2026-11-15T09:50:00Z',
+    dep:'2026-11-15T00:30:00Z', arr:'2026-11-15T10:50:00Z', delayNote:'Atrasou 1h (saída original 20:30)',
     aircraft:'Airbus A330 / A350', depTerm:'Terminal 3', arrTerm:'Terminal 4S',
-    boarding:'2026-11-14T22:30:00Z',
+    boarding:'2026-11-14T23:30:00Z',
     links:[['Flightradar24','https://www.flightradar24.com/data/flights/ib272'],
            ['FlightAware','https://www.flightaware.com/live/flight/IBE272'],
            ['Chegadas Madri','https://www.aena.es/es/infovuelos.html']] },
@@ -264,7 +264,7 @@ function render(){
     pos=a; emoji='🧳';
     const toBoard=f.boardD-t;
     title='Ainda não decolou';
-    sub=`${f.airline} ${f.number} sai de Guarulhos às ${fmt(f.depD,BR)} (Brasília), ${fmtDay(f.depD,BR)}.`+(toBoard>0?` Embarque às ${fmt(f.boardD,BR)}.`:' Embarque em andamento! 🚶');
+    sub=`${f.airline} ${f.number} sai de Guarulhos às ${fmt(f.depD,BR)} (Brasília), ${fmtDay(f.depD,BR)}.`+(toBoard>0?` Embarque às ${fmt(f.boardD,BR)}.`:' Embarque em andamento! 🚶')+(f.delayNote?` ⚠️ ${f.delayNote}.`:'');
     E('k1').textContent=dur(f.depD-t); E('k1l').textContent='Para decolar';
     E('k2').textContent=Math.round(total).toLocaleString('pt-BR')+' km'; E('k2l').textContent='Até Madri';
     E('k3').textContent=dur(f.arrD-f.depD); E('k3l').textContent='Tempo de voo';
@@ -346,7 +346,7 @@ function cards(){
         <div><span>Saída</span><b>${f.depTerm}</b></div>
         <div><span>Chegada</span><b>${f.arrTerm}</b></div>
         <div><span>${f.boardingLabel||'Embarque'}</span><b>${fmt(f.boardD,a.tz)} local</b></div>
-        <div><span>Avião</span><b>${f.aircraft}</b></div>
+        <div><span>Avião</span><b>${f.aircraft}</b></div>${f.delayNote?`<div style="grid-column:1/-1"><span>Aviso</span><b style="color:var(--accent)">⚠️ ${f.delayNote}</b></div>`:''}
       </div>
       <div class="links">${f.links.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')}</div>
     </div>`;
